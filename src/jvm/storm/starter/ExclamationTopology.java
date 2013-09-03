@@ -31,6 +31,7 @@ public class ExclamationTopology {
 
     @Override
     public void execute(Tuple tuple) {
+    	System.out.println("=============>" + tuple.getString(0));
       _collector.emit(tuple, new Values(tuple.getString(0) + "!!!"));
       _collector.ack(tuple);
     }
@@ -47,9 +48,11 @@ public class ExclamationTopology {
     TopologyBuilder builder = new TopologyBuilder();
 
     builder.setSpout("word", new TestWordSpout(), 10);
-    builder.setBolt("exclaim1", new ExclamationBolt(), 3).shuffleGrouping("word");
-    builder.setBolt("exclaim2", new ExclamationBolt(), 2).shuffleGrouping("exclaim1");
-
+    builder.setBolt("exclaim1", new ExclamationBolt(), 1).shuffleGrouping("word");
+    builder.setBolt("exclaim2", new ExclamationBolt(), 1).shuffleGrouping("exclaim1");
+    
+    System.setProperty("java.io.tmpdir", "/export/strom/topology/example");
+    
     Config conf = new Config();
     conf.setDebug(true);
 
@@ -59,10 +62,11 @@ public class ExclamationTopology {
       StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
     }
     else {
-
+      conf.setNumWorkers(1);
       LocalCluster cluster = new LocalCluster();
       cluster.submitTopology("test", conf, builder.createTopology());
       Utils.sleep(10000);
+      System.out.println("================================>kill topology================");
       cluster.killTopology("test");
       cluster.shutdown();
     }

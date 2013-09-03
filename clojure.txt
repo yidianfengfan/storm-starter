@@ -1,0 +1,27 @@
+http://qiujj.com/static/clojure-handbook.html#_Toc339573062
+
+java -cp clojure-1.0.0.jar clojure.lang.Repl
+java -cp clojure-1.0.0.jar clojure.main /some/path/to/Euler1.clj 
+
+(defn divisible-by-3-or-5? [num] (or (== (mod num 3) 0)(== (mod num 5) 0))) 
+(println (reduce + (filter divisible-by-3-or-5? (range 1000))))
+
+
+
+http://xumingming.sinaapp.com/117/twitter-storm%E7%9A%84%E4%B8%80%E4%BA%9B%E5%85%B3%E9%94%AE%E6%A6%82%E5%BF%B5/
+计算拓扑	topologies
+消息流 	streames tuple
+消息源 spouts
+blots
+
+storm被广泛用来进行实时日志处理，出现在实时统计、实时风控、实时推荐等场景中
+
+总结一些Twitter Storm对于tuple的处理/创建过程：
+
+    Bolt创建一个tuple。
+    Worker把tuple, 以及这个tuple要发送的地址(task-id)组成一个对象(task-id, tuple)放进待发送队列(LinkedBlockingQueue).
+    一个单独的线程(async-loop所创建的线程）会取出发送队列里面的每个tuple来处理
+        Worker创建从当前task到目的task的zeromq连接。
+        序列化这个tuple并且通过这个zeromq的连接来发送这个tuple。
+
+
