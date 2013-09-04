@@ -1,8 +1,22 @@
 package storm.starter.bolt;
 
-import backtype.storm.tuple.Tuple;
+import java.net.UnknownHostException;
+import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.log4j.Logger;
+
 import storm.starter.tools.Rankings;
+import backtype.storm.tuple.Tuple;
+
+import com.mongodb.BasicDBObjectBuilder;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
+import commons.mongo.MongoUtils;
 
 /**
  * This bolt merges incoming {@link Rankings}.
@@ -30,12 +44,59 @@ public final class TotalRankingsBolt extends AbstractRankerBolt {
   @Override
   void updateRankingsWithTuple(Tuple tuple) {
     Rankings rankingsToBeMerged = (Rankings) tuple.getValue(0);
+    
+    System.out.println("TotalRankingsBolt now rank===>" + rankingsToBeMerged);
+    
     super.getRankings().updateWith(rankingsToBeMerged);
     super.getRankings().pruneZeroCounts();
+    
     System.out.println("TotalRankingsBolt now rank===>" + super.getRankings());
+    mongoStoreStart();
+  }
+  private volatile AtomicBoolean start = new AtomicBoolean(false);
+  private AtomicBoolean running = new AtomicBoolean(true);
+  private Thread thread = null;
+  private void mongoStoreStart() {
+	  if(start.compareAndSet(false, true)){
+		  thread = new Thread(){
+
+			@Override
+			public void run() {
+				while(running.get()){
+					
+					try {
+						Thread.sleep(1000);
+						System.out.println("================save to db================");
+				    	MongoClient client = MongoUtils.getMongoClient();
+				    	DB db = client.getDB("test");
+				    	DBCollection collection = db.getCollection("top_n");
+				    	DBObject doc = BasicDBObjectBuilder.start()
+				        .add("doc", getRankings().toString())
+				        .add("timestamp", new Date())
+				        .get();
+				    	collection.insert(doc, WriteConcern.SAFE);
+				    	client.close();
+				    	
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			  
+		  };
+		  
+		  thread.start();
+	  }
   }
 
-  @Override
+  
+@Override
+public void cleanup() {
+	super.cleanup();
+	running.set(false);
+}
+
+@Override
   Logger getLogger() {
     return LOG;
   }

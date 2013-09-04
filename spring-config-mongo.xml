@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="GBK"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+	default-autowire="byName">
+
+	<bean id="mongoOptions" class="com.mongodb.MongoOptions">
+		<property name="connectionsPerHost" value="10"></property>
+		<property name="threadsAllowedToBlockForConnectionMultiplier" value="10"></property>
+		<property name="connectTimeout" value="10000"></property>
+		<property name="socketTimeout" value="10000"></property>
+	</bean>
+
+	<bean id="mongo" class="com.mongodb.Mongo">
+		<constructor-arg>
+			<list>
+				<ref bean="address1" />
+				<ref bean="address2" />
+				<ref bean="address3" />
+				<ref bean="address4" />
+			</list>
+		</constructor-arg>
+		<constructor-arg ref="mongoOptions" />
+	</bean>
+
+	<bean id="address1" class="com.mongodb.ServerAddress">
+		<constructor-arg value="${mongo.wr.hostname1}"></constructor-arg>
+		<constructor-arg value="${mongo.wr.port1}"></constructor-arg>
+	</bean>
+
+	<bean id="address2" class="com.mongodb.ServerAddress">
+		<constructor-arg value="${mongo.wr.hostname2}"></constructor-arg>
+		<constructor-arg value="${mongo.wr.port2}"></constructor-arg>
+	</bean>
+
+	<bean id="address3" class="com.mongodb.ServerAddress">
+		<constructor-arg value="${mongo.wr.hostname3}"></constructor-arg>
+		<constructor-arg value="${mongo.wr.port3}"></constructor-arg>
+	</bean>
+	
+	<bean id="address4" class="com.mongodb.ServerAddress">
+		<constructor-arg value="${mongo.wr.hostname4}"></constructor-arg>
+		<constructor-arg value="${mongo.wr.port4}"></constructor-arg>
+	</bean>
+
+	<bean id="morphia" class="com.google.code.morphia.Morphia"></bean>
+
+
+	<bean id="datastore" class="com.google.code.morphia.DatastoreImpl">
+		<constructor-arg ref="morphia"></constructor-arg>
+		<constructor-arg ref="mongo"></constructor-arg>
+		<constructor-arg value="club"></constructor-arg>
+		<constructor-arg value="${mongo.username}"></constructor-arg>
+		<constructor-arg value="${mongo.password}"></constructor-arg>
+	</bean>
+
+
+	<bean id="dao" class="com.google.code.morphia.DAO">
+		<constructor-arg ref="datastore"></constructor-arg>
+	</bean>
+
+
+</beans>

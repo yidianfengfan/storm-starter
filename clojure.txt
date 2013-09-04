@@ -25,3 +25,11 @@ storm被广泛用来进行实时日志处理，出现在实时统计、实时风控、实时推荐等场景中
         序列化这个tuple并且通过这个zeromq的连接来发送这个tuple。
 
 
+
+mongo.exe -u logInstance_rw -p logInstance 192.168.196.104:20011/logInstance
+db.createCollection("mycoll", {capped:true, size:10240000, max:10000});
+
+ "mongodb://" + obj.username + ":" + obj.password + "@" + obj.hostname + ":" + obj.port + "/" + obj.db
+ 
+
+

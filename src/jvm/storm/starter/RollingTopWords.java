@@ -56,6 +56,7 @@ public class RollingTopWords {
   }
 
   public static void main(String[] args) throws Exception {
+	System.setProperty("java.io.tmpdir", "/export/strom/topology/example");
     new RollingTopWords().run();
   }
 }
