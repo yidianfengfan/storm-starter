@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * This topology demonstrates Storm's stream groupings and multilang capabilities.
  */
-public class WordCountTopology {
+public class DemoTopology {
   public static class SplitSentence extends ShellBolt implements IRichBolt {
 
     public SplitSentence() {
@@ -59,7 +59,7 @@ public class WordCountTopology {
   }
 
   public static void main(String[] args) throws Exception {
-
+	  System.setProperty("java.io.tmpdir", "/export/strom/topology/example");
     TopologyBuilder builder = new TopologyBuilder();
 
     builder.setSpout("spout", new RandomSentenceSpout(), 5);

@@ -51,5 +51,8 @@ if __name__ == '__main__':
                 
         print '===============sleep 60 * 60s========================'
         time.sleep(60)
+        import hashlib
+        hashlib.new(name, string);
+        
         
 

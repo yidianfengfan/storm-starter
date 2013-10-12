@@ -33,10 +33,12 @@ public class RandomSentenceSpout extends BaseRichSpout {
 
   @Override
   public void ack(Object id) {
+	  System.out.println("ack---" + id);
   }
 
   @Override
   public void fail(Object id) {
+	  System.out.println("fail---" + id);
   }
 
   @Override

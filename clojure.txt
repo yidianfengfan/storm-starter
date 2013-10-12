@@ -33,3 +33,71 @@ db.createCollection("mycoll", {capped:true, size:10240000, max:10000});
  
 
 
+为了保证数据能正确的被处理, 对于spout产生的每一个tuple, storm都会进行跟踪, 这里面涉及到ack/fail的处理, 如果一个tuple处理成功, 会调用spout的ack方法, 如果失败, 会调用fail方法. 而在处理tuple的每一个bolt都会通过OutputCollector来告知storm, 当前bolt处理是否成功
+中间的某个bolt fail了, 不会影响后面的bolt执行, 但是会立即触发spout的fail. 相当于短路了, 后面bolt虽然也执行了, 但是ack/fail对spout已经无意义了. 也就是说, 只要bolt集合中的任何一个fail了, 会立即触发spout的fail方法. 而ack方法需要所有的bolt调用为ack才能触发.
+
+另外一点, storm只是通过ack/fail机制来告诉应用方bolt中间的处理情况, 对于成功/失败该如何处理, 必须由应用自己来决定, 因为storm内部也没有保存失败的具体数据, 但是也有办法知道失败记录, 因为spout的ack/fail方法会附带一个msgId对象, 我们可以在最初发射tuple的时候将将msgId设置为tuple, 然后在ack/fail中对该tuple进行处理
+
+
+1.在提交了一个topology之后(是在nimbus所在的机器么?), 创建spout/bolt实例(spout/bolt在storm中统称为component)并进行序列化.
+2.将序列化的component发送给所有的任务所在的机器
+3.在每一个任务上反序列化component.
+4.在开始执行任务之前, 先执行component的初始化方法(bolt是prepare, spout是open).
+
+因此component的初始化操作应该在prepare/open方法中进行, 而不是在实例化component的时候进行
+
+https://github.com/mykidong/storm-spring-example
+
+http://www.cnblogs.com/zhengyun_ustc/archive/2013/02/08/tupletree.html
+http://chenlx.blog.51cto.com/4096635/747435
+
+
+BaseBasicBolt 发送到BasicOutputCollector的元组会自动固定到输入元组，并且当execute方法完成时，为你自动acked输入元组 
+   exception时fail但也停止了，  是不是要最后一个要IRichBolt来fail(tuple)
+   Storm是一个快速失败的系统。如果一个异常被抛出，topology会失败
+   ===>抛出FailedException,
+   public class BasicBoltExecutor implements IRichBolt 中
+public void execute(Tuple input) {
+        _collector.setContext(input);
+        try {
+            _bolt.execute(input, _collector);
+            _collector.getOutputter().ack(input);
+        } catch(FailedException e) {
+            LOG.warn("Failed to process tuple", e);
+            _collector.getOutputter().fail(input);
+        }
+    }
+       
+IRichBolt  得手动
+emit时要带上oldTuple
+ack
+fail
+
+
+
+
+有这样一个需求, 要保留用户最近看过的100张图片. 其中redis里面只保存ID, 图片放在另外的存储里面
+这个事情, 在redis里面可以用list来完成
+
+LREM username 0 pic 把当前图片的id从list中删掉,如果有的话
+RPUSH username pic 把最新的图片添加到list的最后
+如果不想要知道哪个图片被淘汰了, 直接 LTRIM  就可以了
+Ltrim username 0 100
+如果需要知道哪个图片被淘汰了, 需要pop一下
+if LLEN username >MAX:
+    LPOP username
+
+LPUSH log newest_log
+LTRIM log 0 99  #最新的 100 项
+
+
+
+fail(){
+	if(len(failequeue) > 1000) failure;
+	failqueue.put(objectId)
+	RPUSH to redis queue
+}
+
+ack(){
+   failQueue.remove(id)
+}
