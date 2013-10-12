@@ -101,3 +101,49 @@ fail(){
 ack(){
    failQueue.remove(id)
 }
+
+
+一般来说spout/bolt的生命周期如下:
+1.在提交了一个topology之后(是在nimbus所在的机器么?), 创建spout/bolt实例(spout/bolt在storm中统称为component)并进行序列化.
+2.将序列化的component发送给所有的任务所在的机器
+3.在每一个任务上反序列化component.
+4.在开始执行任务之前, 先执行component的初始化方法(bolt是prepare, spout是open).
+
+因此component的初始化操作应该在prepare/open方法中进行, 而不是在实例化component的时候进行. 
+
+在每个spout/bolt维护自己的ApplicationConext, 于是将一个all in one 的spring打散成spring-spout.xml, spring-bolt-xxx.xml. 
+然后在open/prepare方法中加载对应的spring配置文件
+
+public class SpringApplicationContextFactory {
+	
+	private static ApplicationContext applicationContext;
+	
+	public static final String CONF_PATH = "classpath*:META-INF/spring/*.xml";
+	
+	public static ApplicationContext newInstance()
+	{
+		if(applicationContext == null)
+		{
+			synchronized(ApplicationContext.class)
+			{
+				applicationContext = new ClassPathXmlApplicationContext(CONF_PATH);
+			}
+		}
+		
+		return applicationContext;
+	}
+}
+
+XXXXBlot
+
+private static ApplicationContext applicationContext = SpringApplicationContextFactory.newInstance(); 
+
+ @Override
+    public void prepare(Map conf, TopologyContext context, OutputCollector collector)
+    {
+        this.collector = collector;
+        
+       
+        
+        this.aggregationService = applicationContext.getBean(AggregationService.class);
+    }
